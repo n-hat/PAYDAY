@@ -4,8 +4,10 @@ const pool = require('./db');
 const authRoutes = require('./routes/auth');
 const employeeRoutes = require('./routes/employees');
 const payEntriesRoutes = require('./routes/payEntries');
+const cors = require('cors');
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/employees', employeeRoutes);
