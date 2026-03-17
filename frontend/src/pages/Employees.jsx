@@ -12,7 +12,7 @@ function Employees() {
 
   useEffect(() => {
     if (!token) { navigate('/'); return }
-    axios.get(`${import.meta.env.VITE_API_URL}/employees', {
+    axios.get(`${import.meta.env.VITE_API_URL}/employees`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => setEmployees(res.data))
       .catch(err => {
@@ -26,7 +26,7 @@ function Employees() {
   async function handleAddEmployee(e) {
     e.preventDefault()
     if (!newName.trim()) return
-    const res = await axios.post(`${import.meta.env.VITE_API_URL}/employees', { name: newName }, {
+    const res = await axios.post(`${import.meta.env.VITE_API_URL}/employees`, { name: newName }, {
       headers: { Authorization: `Bearer ${token}` }
     })
     setEmployees(prev => [...prev, res.data].sort((a, b) => a.name.localeCompare(b.name)))
