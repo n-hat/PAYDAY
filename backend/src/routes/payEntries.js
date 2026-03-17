@@ -4,9 +4,10 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const requireAuth = require('../middleware/auth');
+const requireRole = require('../middleware/requireRole');
 
 // Log pay for an employee (or update if entry already exists for that day)
-router.post('/', requireAuth, async (req, res) => {
+router.post('/', requireAuth, requireRole('owner'), async (req, res) => {
   const { employee_id, amount, entry_date } = req.body;
   try {
     const result = await pool.query(
@@ -36,6 +37,34 @@ router.get('/week', requireAuth, async (req, res) => {
       [week]
     );
     res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get today's entry for a specific employee
+router.get('/today/:employeeId', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM pay_entries WHERE employee_id = $1 AND entry_date = CURRENT_DATE',
+      [req.params.employeeId]
+    );
+    res.json(result.rows[0] || null);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Delete a pay entry
+router.delete('/:id', requireAuth, requireRole('owner'), async (req, res) => {
+  try {
+    const result = await pool.query(
+      'DELETE FROM pay_entries WHERE id = $1 RETURNING *',
+      [req.params.id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Entry not found' });
+    res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

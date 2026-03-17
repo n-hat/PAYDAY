@@ -12,6 +12,7 @@ function Login() {
       const res = await axios.post('http://localhost:3000/auth/login', { email, password })
       localStorage.setItem('token', res.data.token)
       localStorage.setItem('name', res.data.name)
+      localStorage.setItem('role', res.data.role)
       window.location.href = '/employees'
     } catch (err) {
       setError('Invalid email or password')

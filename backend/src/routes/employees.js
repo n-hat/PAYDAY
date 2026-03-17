@@ -6,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const requireAuth = require('../middleware/auth');
+const requireRole = require('../middleware/requireRole');
 
 // Get all active employees
 router.get('/', requireAuth, async (req, res) => {
@@ -20,7 +21,7 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // Add a new employee
-router.post('/', requireAuth, async (req, res) => {
+router.post('/', requireAuth, requireRole('owner'), async (req, res) => {
   const { name } = req.body;
   try {
     const result = await pool.query(
@@ -34,7 +35,7 @@ router.post('/', requireAuth, async (req, res) => {
 });
 
 // Deactivate an employee
-router.patch('/:id/deactivate', requireAuth, async (req, res) => {
+router.patch('/:id/deactivate', requireAuth, requireRole('owner'), async (req, res) => {
   try {
     const result = await pool.query(
       'UPDATE employees SET is_active = false WHERE id = $1 RETURNING *',
