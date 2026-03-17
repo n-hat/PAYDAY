@@ -7,7 +7,7 @@ const payEntriesRoutes = require('./routes/payEntries');
 const cors = require('cors');
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
 app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/employees', employeeRoutes);
@@ -22,7 +22,7 @@ app.get('/', async (req, res) => {
     }
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

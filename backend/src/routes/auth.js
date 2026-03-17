@@ -3,11 +3,12 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require("../db");
+const requireAuth = require("../middleware/auth");
+const requireRole = require("../middleware/requireRole");
 
-// Register a new user
-router.post("/register", async (req, res) => {
+// Create a new account (owner only)
+router.post("/register", requireAuth, requireRole('owner'), async (req, res) => {
   const { name, email, password, role } = req.body;
-
   try {
     const passwordHash = await bcrypt.hash(password, 10);
     const result = await pool.query(
@@ -20,14 +21,28 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// Update a user's name (owner only)
+// curl -X PATCH http://localhost:3000/auth/users/:id -H "Authorization: Bearer TOKEN" -H "Content-Type: application/json" -d '{"name":"New Name"}'
+router.patch("/users/:id", requireAuth, requireRole('owner'), async (req, res) => {
+  const { name } = req.body;
+  try {
+    const result = await pool.query(
+      "UPDATE users SET name = $1 WHERE id = $2 RETURNING id, name, email, role",
+      [name, req.params.id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
     const user = result.rows[0];
 
     if (!user)
@@ -37,9 +52,20 @@ router.post("/login", async (req, res) => {
     if (!match)
       return res.status(401).json({ error: "Invalid email or password" });
 
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: "365d",
-    });
+    let employeeId = null;
+    if (user.role === 'employee') {
+      const empResult = await pool.query(
+        "SELECT id FROM employees WHERE user_id = $1",
+        [user.id]
+      );
+      employeeId = empResult.rows[0]?.id || null;
+    }
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role, employee_id: employeeId },
+      process.env.JWT_SECRET,
+      { expiresIn: "365d" }
+    );
     res.json({ token, name: user.name, role: user.role });
   } catch (err) {
     res.status(500).json({ error: err.message });
