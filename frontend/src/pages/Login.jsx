@@ -9,7 +9,7 @@ function Login() {
   async function handleSubmit(e) {
     e.preventDefault()
     try {
-      const res = await axios.post('${import.meta.env.VITE_API_URL}/auth/login', { email, password })
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, { email, password })
       localStorage.setItem('token', res.data.token)
       localStorage.setItem('name', res.data.name)
       localStorage.setItem('role', res.data.role)

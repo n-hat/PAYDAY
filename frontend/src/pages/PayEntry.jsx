@@ -47,7 +47,7 @@ function PayEntry() {
   async function handleAdd(e) {
     e.preventDefault()
     if (!amount) return
-    const res = await axios.post('${import.meta.env.VITE_API_URL}/pay-entries', {
+    const res = await axios.post(`${import.meta.env.VITE_API_URL}/pay-entries', {
       employee_id: employeeId,
       amount,
       entry_date: date,
